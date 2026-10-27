@@ -5,9 +5,9 @@ namespace Colections
 {
     public class CoadaCirculara<T> : ColectieAbstracta<T>, ICoada<T>
     {
-        T[] items = new T[4];
-        int first = 0;
-        public int Capacity { get; private set; } = 4;
+        private T[] items = new T[4];
+        private int first = 0;
+        public int Capacity => items.Length;
 
         //IColectie
 
@@ -26,6 +26,7 @@ namespace Colections
 
                     items[(first + Count - 1) % items.Length] = default;
                     Count--;
+                    versiune++;
                     return true;
                 }
             }
@@ -37,19 +38,7 @@ namespace Colections
             items = new T[4];
             Count = 0;
             first = 0;
-            Capacity = 4;
-        }
-
-        public override T[] ToArray()
-        {
-            T[] array = new T[Count];
-
-            for (int i = 0; i < Count; i++)
-            {
-                array[i] = items[(first + i) % items.Length];
-            }
-
-            return array;
+            versiune++;
         }
 
         //ICoada
@@ -58,32 +47,43 @@ namespace Colections
         {
             ResizeIfFull();
             items[(first + Count++) % items.Length] = item;
+            versiune++;
         }
 
         public T Pop()
         {
-            if (Count == 0) throw new InvalidOperationException("Coada este goala.");
+            if (Count == 0) throw new InvalidOperationException("Queue empty.");
             T value = items[first];
             items[first] = default;
 
             first = (first + 1) % items.Length;
             Count--;
+            versiune++;
             return value;
         }
 
         public T Peek()
         {
-            if (Count == 0) throw new InvalidOperationException("Coada este goala.");
+            if (Count == 0) throw new InvalidOperationException("Queue empty.");
             return items[first];
+        }
+
+        public override IEnumerator<T> GetEnumerator()
+        {
+            int index = versiune;
+            for (int i = 0; i < Count; i++)
+            {
+                yield return items[(first + i) % items.Length];
+                if (versiune != index) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute");
+            }
         }
 
         private void ResizeIfFull()
         {
             if (Count < items.Length) return;
 
-            if (first + Count == Capacity) Capacity *= 2;
-
-            T[] newItems = new T[Count + 1];
+            T[] newItems = new T[Capacity * 2];
 
             for (int i = 0; i < Count; i++)
             {

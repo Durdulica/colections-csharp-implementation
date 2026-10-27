@@ -7,6 +7,7 @@ namespace Colections.Colectii
     {
         private int count = 0;
         public int Count { get => count; set { count = value; } }
+        protected int versiune = 0;
 
         public abstract void Add(T item);
 
@@ -23,19 +24,23 @@ namespace Colections.Colectii
 
         public abstract void Clear();
 
-        public abstract T[] ToArray();
-        
-        public IEnumerator<T> GetEnumerator()
+        public T[] ToArray()
         {
-            T[] array = ToArray();
-            for(int i = 0; i < Count; i++)
+            T[] array = new T[count];
+            int index = 0;
+
+            foreach(T x in this)
             {
-                yield return array[i];
+                array[index++] = x;
             }
+
+            return array;
         }
+
+        public abstract IEnumerator<T> GetEnumerator();
         
         IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
 
-        public override string ToString() => "[" + String.Join(",", ToArray()) + "]";
+        public override string ToString() => "[" + String.Join(", ", ToArray()) + "]";
     }
 }

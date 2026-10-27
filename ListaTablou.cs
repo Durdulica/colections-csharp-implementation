@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using Colections.Colectii;
+﻿using Colections.Colectii;
 using Colections.Common;
 
 namespace Colections
@@ -7,7 +6,7 @@ namespace Colections
     public class ListaTablou<T> : ColectieAbstracta<T>, ILista<T>
     {
         private T[] items = new T[4];
-        public int Capacity = 4;
+        public int Capacity => items.Length;
 
         //IColectie
 
@@ -16,6 +15,7 @@ namespace Colections
             ResizeIfFull();
 
             items[Count++] = item;
+            versiune++;
         }
 
         public override bool Remove(T item)
@@ -30,7 +30,7 @@ namespace Colections
                     }
                     items[Count] = default;
                     Count--;
-
+                    versiune++;
                     return true;
                 }
             }
@@ -41,20 +41,16 @@ namespace Colections
         public override void Clear()
         {
             items = new T[4];
-            Count = 0;
-            Capacity = 0;
-        }
-
-        public override T[] ToArray()
-        {
-            return items;
+            Count = 0; 
+            versiune++;
         }
 
         //ILista
 
         public void Insert(int index, T item)
         {
-            if (index > Count || index < 0) return;
+            if (index > Count || index < 0) throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
 
             ResizeIfFull();
 
@@ -65,19 +61,21 @@ namespace Colections
 
             items[index] = item;
             Count++;
-
+            versiune++;
         }
 
         public void RemoveAt(int index)
         {
-            if (index > Count || index < 0) return;
+            if (index >= Count || index < 0) throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
 
             for (int j = index; j < Count - 1; j++)
             {
                 items[j] = items[j + 1];
             }
-            items[Count] = default;
+            items[Count - 1] = default;
             Count--;
+            versiune++;
         }
 
         public int IndexOf(T item)
@@ -95,19 +93,43 @@ namespace Colections
 
         public T this[int index]
         {
-            get {  return items[index]; }
-            set { items[index] = value; }
+            get
+            {
+                if (index >= Count || index < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
+                }
+                return items[index];
+            }
+            set
+            {
+                if (index >= Count || index < 0)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
+                }
+                items[index] = value;
+                versiune++;
+            }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => ((IEnumerable<T>)this).GetEnumerator();
+        public override IEnumerator<T> GetEnumerator()
+        {
+            int index = versiune;
+            for (int i = 0; i < Count; i++)
+            {
+                yield return items[i];
+                if (versiune != index) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute");
+            }
+        }
 
         private void ResizeIfFull()
         {
             if (Count == items.Length)
             {
-                
-                T[] newItems = new T[Count + 1];
-                if(Count == Capacity) Capacity *= 2;
+                T[] newItems = new T[Capacity * 2];
                 
                 for (int i = 0; i < Count; i++)
                 {

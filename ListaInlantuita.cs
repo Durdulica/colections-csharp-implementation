@@ -1,6 +1,5 @@
 ﻿using Colections.Colectii;
 using Colections.Common;
-using System.Collections;
 
 namespace Colections
 {
@@ -8,12 +7,10 @@ namespace Colections
     {
         private Node<T> Head;
         private Node<T> Tail;
-        public int Count { get; private set; }
         
         public ListaInlantuita()
         {
             Head = null;
-            Tail = new Node<T>();
             Count = 0;
         }
 
@@ -21,6 +18,7 @@ namespace Colections
         
         public override void Add(T item)
         {
+            versiune++;
             if (Head == null)
             {
                 Head = Tail = new Node<T>(item, null);
@@ -35,7 +33,7 @@ namespace Colections
 
         public override bool Remove(T item)
         {
-            if(Head == null) return false;
+            if (Head == null) return false;
 
             EqualityComparer<T> comparer = EqualityComparer<T>.Default;
 
@@ -44,6 +42,7 @@ namespace Colections
                 Head = Head.Next;
 
                 Count--;
+                versiune++;
                 return true;
             }
 
@@ -59,7 +58,7 @@ namespace Colections
                         Tail = current;
                     }
                     Count--;
-
+                    versiune++;
                     return true;
                 }
 
@@ -74,15 +73,7 @@ namespace Colections
             Count = 0;
             Head = null;
             Tail = null;
-        }
-
-        public override T[] ToArray()
-        {
-            T[] array = new T[Count];
-            int index = 0;
-            for (Node<T> n = Head; n != null; n = n.Next) array[index++] = n.Data;
-
-            return array;
+            versiune++;
         }
 
         //IList
@@ -93,16 +84,18 @@ namespace Colections
             {
                 Head = Tail = new Node<T>(item, null);
                 Count++;
+                versiune++;
                 return;
             }
 
-            if (index > Count || index < 0) return;
+            if (index > Count || index < 0) throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
 
             if (index == 0)
             {
                 Head = new Node<T>(item, Head);
                 Count++;
-
+                versiune++;
                 return;
             }
 
@@ -121,7 +114,7 @@ namespace Colections
                         Tail = Tail.Next;
                     }
                     Count++;
-      
+                    versiune++;
                     return;
                 }
 
@@ -132,12 +125,14 @@ namespace Colections
 
         public void RemoveAt(int index)
         {
-            if (index >= Count || index < 0 || Head == null) return;
+            if (index >= Count || index < 0 || Head == null) throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
 
-            if(index == 0)
+            if (index == 0)
             {
                 Head = Head.Next;
                 Count--;
+                versiune++;
                 return;
             }
 
@@ -155,7 +150,7 @@ namespace Colections
                         Tail = current;
                     }
                     Count--;
-
+                    versiune++;
                     return;
                 }
 
@@ -187,9 +182,10 @@ namespace Colections
         public T this[int index] {
             get 
             { 
-                if(index > Count - 1 || index < 0)
+                if(index >= Count || index < 0)
                 {
-                    return default(T);
+                    throw new ArgumentOutOfRangeException(nameof(index), 
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
                 }
 
                 Node<T> current = Head;
@@ -210,9 +206,10 @@ namespace Colections
             }
             set 
             {
-                if (index > Count - 1 || index < 0)
+                if (index >= Count || index < 0)
                 {
-                    return;
+                    throw new ArgumentOutOfRangeException(nameof(index),
+                        "Index was out of range. Must be non-negative and less than the size of the collection.");
                 }
 
                 Node<T> current = Head;
@@ -222,6 +219,7 @@ namespace Colections
                     if (cnt == index)
                     {
                         current.Data = value;
+                        versiune++;
                         return;
                     }
 
@@ -233,6 +231,15 @@ namespace Colections
             }
         }
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public override IEnumerator<T> GetEnumerator()
+        {
+            int index = versiune;
+            for (Node<T> n = Head; n != null; n = n.Next) 
+            {
+                yield return n.Data;
+                if (versiune != index) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute");
+            }
+        }
     }
 }

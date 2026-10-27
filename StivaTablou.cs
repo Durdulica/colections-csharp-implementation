@@ -6,7 +6,7 @@ namespace Colections
     public class StivaTablou<T> : ColectieAbstracta<T>, IStiva<T>
     {
         private T[] items = new T[4];
-        public int Capacity { get; private set; } = 4;
+        public int Capacity => items.Length;
 
         //IColectie
 
@@ -14,7 +14,7 @@ namespace Colections
 
         public override bool Remove(T item)
         {
-            for (int i = 0; i < Count; i++) 
+            for (int i = Count - 1; i >= 0; i--) 
             {
                 if (EqualityComparer<T>.Default.Equals(items[i], item)) 
                 {
@@ -25,6 +25,7 @@ namespace Colections
 
                     items[Count - 1] = default;
                     Count--;
+                    versiune++;
                     return true; 
                 }
             }
@@ -35,20 +36,8 @@ namespace Colections
         public override void Clear()
         {
             items = new T[4];
-            Capacity = 4;
             Count = 0;
-        }
-
-        public override T[] ToArray()
-        {
-            T[] array = new T[Count];
-
-            for (int i = 0; i < Count; i++) 
-            {
-                array[i] = items[i];
-            }
-
-            return array;
+            versiune++;
         }
 
         //IStiva
@@ -57,20 +46,22 @@ namespace Colections
         {
             ResizeIfFull();
             items[Count++] = item;
+            versiune++;
         }
 
         public T Pop()
         {
-            if(Count == 0) throw new InvalidOperationException("Stiva e goala");
+            if(Count == 0) throw new InvalidOperationException("Stack empty.");
             T value = items[Count - 1];
             items[Count - 1] = default;
             Count--;
+            versiune++;
             return value;
         }
 
         public T Peek()
         {
-            if (Count == 0) throw new InvalidOperationException("Stiva e goala");
+            if (Count == 0) throw new InvalidOperationException("Stack empty.");
             return items[Count - 1];
         }
 
@@ -78,7 +69,7 @@ namespace Colections
         {
             if (Count < items.Length) return;
 
-            T[] newItems = new T[Count + 1];
+            T[] newItems = new T[Capacity * 2];
 
             for (int i = 0; i < Count; i++)
             {
@@ -86,6 +77,17 @@ namespace Colections
             }
 
             items = newItems;
+        }
+
+        public override IEnumerator<T> GetEnumerator()
+        {
+            int index = versiune;
+            for (int i = Count - 1; i >= 0; i--) 
+            {
+                yield return items[i];
+                if (versiune != index) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute");
+            }
         }
     }
 }
