@@ -5,9 +5,9 @@ namespace Colections
 {
     public class DictionarHash<K, V> : IDictionar<K, V> where K : notnull
     {
-        internal PairNode<K, V> node = new PairNode<K, V>();
-        internal ListaInlantuita<PairNode<K, V>>[]? buckets = new ListaInlantuita<PairNode<K, V>>[8];
+        internal ListaInlantuita<PairNode<K, V>>[] buckets = new ListaInlantuita<PairNode<K, V>>[8];
         EqualityComparer<K> comparer = EqualityComparer<K>.Default;
+        int versiune = 0;
 
         public DictionarHash()
         {
@@ -23,13 +23,15 @@ namespace Colections
             {
                 PairNode<K, V>? pair = Find(key);
                 if (pair == null)
-                    throw new KeyNotFoundException($"Cheia '{key}' nu exista.");
+                    throw new KeyNotFoundException("The given key " + key + " was not present in the dictionary.");
                 return pair.Value;
             }
             set 
             { 
-                //if(!ContainsKey(key)) throw new KeyNotFoundException("The given key " + key + " was not present in the dictionary."); ???
-                Add(key, value); 
+                if(!ContainsKey(key)) throw new KeyNotFoundException("The given key " + key + " was not present in the dictionary.");
+                PairNode<K, V>? pair = Find(key);
+                pair.Value = value;
+                versiune++;
             }
         }
 
@@ -56,15 +58,13 @@ namespace Colections
             PairNode<K, V>? pair = Find(key);
             if (pair != null) 
             {
-                pair.Value = value;
-                return;
+                throw new ArgumentException("An item with the same key has already been added. Key: " + key);
             }
 
             buckets[HashKey(key)].Add(new PairNode<K, V>(key, value));
             Count++;
-
-            if (Count > buckets.Length * 3/4)
-                Resize();
+            versiune++;
+            if (Count > buckets.Length * 3/4) Resize();
         }
 
         public void Clear()
@@ -74,6 +74,7 @@ namespace Colections
                 buckets[i] = new ListaInlantuita<PairNode<K, V>>();
             }
             Count = 0;
+            versiune++;
         }
 
         public bool ContainsKey(K key) => Find(key) != null;
@@ -89,6 +90,7 @@ namespace Colections
             ListaInlantuita<PairNode<K, V>> bucket = buckets[HashKey(key)];
             bucket.Remove(pair);
             Count--;
+            versiune++;
             return true;
         }
 
@@ -102,8 +104,6 @@ namespace Colections
             }
 
             value = pair.Value;
-            buckets[HashKey(key)].Remove(pair);
-            Count--;
             return true;
         }
 
@@ -111,15 +111,15 @@ namespace Colections
         {
             get
             {
-                int versiune = Count;
+                int index = versiune;
                 for (int i = 0; i < BucketsLength; i++)
                 {
                     ListaInlantuita<PairNode<K,V>> list = buckets[i];
                     foreach(PairNode<K,V> pair in list)
                     {
                         yield return pair.Key;
-                        if (versiune != Count) throw new InvalidOperationException(
-                            "Collection was modified; enumeration operation may not execute");
+                        if (versiune != index) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute.");
                     }
                 }
             }
@@ -129,15 +129,15 @@ namespace Colections
         {
             get
             {
-                int versiune = Count;
+                int index = versiune;
                 for (int i = 0; i < BucketsLength; i++)
                 {
                     ListaInlantuita<PairNode<K, V>> list = buckets[i];
                     foreach (PairNode<K, V> pair in list)
                     {
                         yield return pair.Value;
-                        if (versiune != Count) throw new InvalidOperationException(
-                            "Collection was modified; enumeration operation may not execute");
+                        if (versiune != versiune) throw new InvalidOperationException(
+                            "Collection was modified; enumeration operation may not execute.");
                     }
                 }
             }

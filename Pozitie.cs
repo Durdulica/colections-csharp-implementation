@@ -21,7 +21,7 @@
 
         public override int GetHashCode()
         {
-            return Rand.GetHashCode() + Coloana.GetHashCode();
+            return HashCode.Combine(Rand, Coloana);
         }
     }
 }

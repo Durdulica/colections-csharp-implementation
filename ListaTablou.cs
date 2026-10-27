@@ -28,7 +28,7 @@ namespace Colections
                     {
                         items[j] = items[j + 1];
                     }
-                    items[Count] = default;
+                    items[Count - 1] = default;
                     Count--;
                     versiune++;
                     return true;

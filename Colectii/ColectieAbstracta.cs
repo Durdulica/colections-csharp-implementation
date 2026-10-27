@@ -13,9 +13,9 @@ namespace Colections.Colectii
 
         public abstract bool Remove(T item);
 
-        public bool Contains(T item)
+        public virtual bool Contains(T item)
         {
-            foreach (T x in ToArray())
+            foreach (T x in this)
             {
                 if (EqualityComparer<T>.Default.Equals(x, item)) return true;
             }

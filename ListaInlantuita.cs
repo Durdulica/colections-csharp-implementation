@@ -78,22 +78,14 @@ namespace Colections
 
         //IList
 
-        public void Insert(int index, T item) 
+        public void Insert(int index, T item)
         {
-            if (Head == null)
-            {
-                Head = Tail = new Node<T>(item, null);
-                Count++;
-                versiune++;
-                return;
-            }
-
             if (index > Count || index < 0) throw new ArgumentOutOfRangeException(nameof(index),
                         "Index was out of range. Must be non-negative and less than the size of the collection.");
 
             if (index == 0)
             {
-                Head = new Node<T>(item, Head);
+                Head = Tail = new Node<T>(item, null);
                 Count++;
                 versiune++;
                 return;
